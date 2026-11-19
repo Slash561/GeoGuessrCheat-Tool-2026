@@ -48,4 +48,4 @@ Clicking inside the ApvGuessr window (e.g. **Hide**) moves the focus there, and 
 
 ## Disclaimer
 
-This tool reveals the answer of a round. Using it in competitive or ranked games is cheating and very likely violates GeoGuessr's terms of service.
+This tool reveals the answer of a round. Using it in competitive or ranked games is cheating and very likely violates GeoGuessr's terms of service. Please do not use this tool in online games; use it only when you are playing alone.
