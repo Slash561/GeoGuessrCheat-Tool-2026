@@ -8,13 +8,17 @@
  * While attached, Chrome shows an "ApvGuessr started debugging this browser" bar.
  */
 import { isStreetViewMetadataUrl, parseCoordinates } from './streetViewCoordinates';
-import { revealInCompanionWindow } from './companionWindow';
+import { showCompanionWindow } from './companionWindow';
 import { clearCoordinates, saveCoordinates } from './tabCoordinates';
 
 const PROTOCOL_VERSION = '1.3';
 const GEOGUESSR_URL = /^https:\/\/www\.geoguessr\.com\//;
 
-/** Tabs the debugger is attached to. */
+/**
+ * Tabs the debugger is attached to. Only a cache: it's lost whenever Chrome stops the service
+ * worker, while the debugger itself stays attached. attach() therefore asks Chrome before
+ * attaching again.
+ */
 const attachedTabs = new Set<number>();
 
 /** Per tab: request IDs of Street View metadata responses still loading. */
@@ -40,6 +44,16 @@ async function attach(tabId: number): Promise<void> {
     attachedTabs.add(tabId);
 
     const target = { tabId };
+
+    // sendCommand only succeeds if this extension is attached to the tab, e.g. from before the
+    // service worker was restarted. Then there's nothing to do.
+    try {
+        await chrome.debugger.sendCommand(target, 'Network.enable');
+        return;
+    } catch {
+        // not attached (by us) yet
+    }
+
     try {
         await chrome.debugger.attach(target, PROTOCOL_VERSION);
         await chrome.debugger.sendCommand(target, 'Network.enable');
@@ -115,12 +129,13 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 });
 
 // The keyboard shortcut (manifest "commands", changeable at chrome://extensions/shortcuts) is
-// the only way to show the location. Chrome handles it before the page, so the page never sees
-// the key press, and the companion window opens without taking the focus.
+// the only way to open the companion window. Once it's open, it shows every new location by
+// itself. Chrome handles the shortcut before the page, so the page never sees the key press,
+// and the window opens without taking the focus.
 chrome.commands.onCommand.addListener(async (command, tab) => {
     if (command !== 'show-location') return;
     const windowId = tab?.windowId ?? (await chrome.windows.getLastFocused({ windowTypes: ['normal'] })).id;
-    if (windowId !== undefined) await revealInCompanionWindow(windowId);
+    if (windowId !== undefined) await showCompanionWindow(windowId);
 });
 
 // GeoGuessr tabs that were already open when the extension (re)started.

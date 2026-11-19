@@ -2,7 +2,7 @@
 
 A Chrome extension that shows the location of the current GeoGuessr round: coordinates, address and a small map of the country with the exact spot marked.
 
-The location appears in a separate small window, and you trigger it with a keyboard shortcut, so the game window keeps its size and focus.
+The location appears in a separate small window that you open with a keyboard shortcut, so the game window keeps its size and focus.
 
 ## Installation
 
@@ -34,16 +34,19 @@ After changing the code, run `npm run build` again and click the reload icon on 
 | macOS           | <kbd>Option</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd>   |
 | Windows / Linux | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Y</kbd>   |
 
-You can change it at `chrome://extensions/shortcuts`. The shortcut is the only way to show the location: there is no toolbar button and no "show" button.
+You can change it at `chrome://extensions/shortcuts`. The shortcut is the only way to open the ApvGuessr window: there is no toolbar button. You only need it once: while the window is open, it shows every new location by itself.
 
 ## Usage
 
 1. Start a GeoGuessr round.
 2. Press the shortcut. The ApvGuessr window opens (on first use, at the top right of the browser window) and shows the location. It opens **without taking the focus**, so you can keep playing.
 3. Move the window wherever you like, e.g. to a second monitor. It reopens at the same position and size.
-4. On every new round the location is hidden again. The window says *"New location detected"* until you press the shortcut again.
+4. Keep playing. As long as the window is open, the location of every new round appears in it **as soon as it's detected**, without pressing the shortcut again.
+5. When you no longer want to see the locations, close the window. Press the shortcut to open it again.
 
-Clicking inside the ApvGuessr window (e.g. **Hide**) moves the focus there, and the game window gets a normal `blur` event, as with any other window.
+If you play in several browser windows, pressing the shortcut while the ApvGuessr window is open switches it to the window you pressed it in.
+
+Clicking inside the ApvGuessr window moves the focus there, and the game window gets a normal `blur` event, as with any other window.
 
 
 ## Disclaimer

@@ -3,10 +3,11 @@
  *
  * Runs as an extension page in its own popup window (see companionWindow.ts), so it has its
  * own DOM, never touches the GeoGuessr page and doesn't change the size of its window.
- * The coordinates come from background.ts via chrome.storage.session.
+ * The coordinates come from background.ts via chrome.storage.session. While the window is
+ * open, every new location is shown as soon as it's detected; to stop, close the window.
  */
 import { preloadCountryData, renderCountryMap } from './countryMap';
-import { isRevealMessage } from './messages';
+import { isFollowWindowMessage } from './messages';
 import { type Coordinates, isCoordinates, loadCoordinates, storageKey } from './tabCoordinates';
 
 type AddressInfo = Record<string, string>;
@@ -23,7 +24,6 @@ function element<T extends HTMLElement>(id: string): T {
 
 const ui = {
     status: element<HTMLParagraphElement>('status'),
-    hide: element<HTMLButtonElement>('hide'),
     result: element<HTMLDivElement>('result'),
     mapPanel: element<HTMLDivElement>('mapPanel'),
     map: element<HTMLDivElement>('map'),
@@ -35,14 +35,12 @@ const ui = {
 let tabId: number | undefined;
 let windowId: number | undefined;
 let coordinates: Coordinates | undefined;
-/** Whether the location is shown; reset for every new round so it's never revealed by accident. */
-let revealed = false;
 /** Incremented on every change, so a slow Nominatim response can't overwrite a newer state. */
 let renderVersion = 0;
 
 // --- reverse geocoding -------------------------------------------------------
 
-/** Nominatim result for the last coordinates, so revealing again doesn't hit the API again. */
+/** Nominatim result for the last coordinates, so switching back to a tab doesn't hit the API again. */
 let addressCache: { lat: number; long: number; address: AddressInfo } | null = null;
 
 async function getAddress({ lat, long }: Coordinates): Promise<AddressInfo | undefined> {
@@ -67,18 +65,6 @@ async function getAddress({ lat, long }: Coordinates): Promise<AddressInfo | und
 function showStatus(text: string): void {
     ui.status.textContent = text;
     ui.result.hidden = true;
-}
-
-/** The shortcut as set at chrome://extensions/shortcuts, for the hint in the window. */
-let shortcut = '';
-
-async function loadShortcut(): Promise<void> {
-    const commands = await chrome.commands.getAll().catch(() => []);
-    shortcut = commands.find((c) => c.name === 'show-location')?.shortcut ?? '';
-}
-
-function shortcutHint(): string {
-    return shortcut ? `Press ${shortcut} to show it.` : 'Set a shortcut at chrome://extensions/shortcuts to show it.';
 }
 
 function renderAddress(address: AddressInfo | undefined): void {
@@ -117,7 +103,6 @@ async function render(): Promise<void> {
 
     if (tabId === undefined) return showStatus('Open GeoGuessr in a browser window.');
     if (!coordinates) return showStatus('Waiting for a round to start…');
-    if (!revealed) return showStatus(`New location detected. ${shortcutHint()}`);
 
     const coords = coordinates;
     showStatus('Looking up location…');
@@ -138,8 +123,7 @@ async function render(): Promise<void> {
 function setCoordinates(next: Coordinates | undefined): void {
     const changed = next?.lat !== coordinates?.lat || next?.long !== coordinates?.long;
     coordinates = next;
-    if (changed) revealed = false;
-    void render();
+    if (changed) void render();
 }
 
 /** Switches to the active tab of the followed browser window. */
@@ -151,33 +135,18 @@ async function followActiveTab(): Promise<void> {
 
     tabId = next;
     coordinates = undefined;
-    revealed = false;
-    setCoordinates(tabId === undefined ? undefined : await loadCoordinates(tabId));
-}
-
-/** Shows the location of the current round, if there is one. Triggered only by the shortcut. */
-function reveal(): void {
-    if (!coordinates || revealed) return;
-    revealed = true;
     void render();
+    setCoordinates(tabId === undefined ? undefined : await loadCoordinates(tabId));
 }
 
 // The shortcut was pressed while this window was already open (see companionWindow.ts).
 chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
-    if (!isRevealMessage(message)) return;
+    if (!isFollowWindowMessage(message)) return;
     sendResponse(true);
-    void (async () => {
-        if (message.windowId !== windowId) {
-            windowId = message.windowId;
-            await followActiveTab();
-        }
-        reveal();
-    })();
-});
-
-ui.hide.addEventListener('click', () => {
-    revealed = false;
-    void render();
+    if (message.windowId !== windowId) {
+        windowId = message.windowId;
+        void followActiveTab();
+    }
 });
 
 chrome.storage.session.onChanged.addListener((changes) => {
@@ -224,12 +193,8 @@ async function lastFocusedBrowserWindow(): Promise<number | undefined> {
 }
 
 void (async () => {
-    // The browser window the toolbar icon was clicked in (set by companionWindow.ts).
-    const params = new URLSearchParams(location.search);
-    const param = Number(params.get('window'));
+    // The browser window the shortcut was pressed in (set by companionWindow.ts).
+    const param = Number(new URLSearchParams(location.search).get('window'));
     windowId = Number.isInteger(param) && param > 0 ? param : await lastFocusedBrowserWindow();
-    await loadShortcut();
     await followActiveTab();
-    // Opened by the shortcut: show the location right away.
-    if (params.get('reveal') === '1') reveal();
 })();
