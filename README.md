@@ -6,7 +6,7 @@ The location appears in a separate small window, and you trigger it with a keybo
 
 ## Installation
 
-The repository contains only the TypeScript sources. The JavaScript Chrome loads (`dist/`) is built locally, so a plain clone or ZIP download **won't load** until you build it. Chrome then reports *"Hintergrundskript konnte nicht geladen werden"* / *"Could not load background script"*.
+The repository contains only the TypeScript sources. The JavaScript Chrome loads (`dist/`) is built locally, so a plain clone or ZIP download **won't load** until you build it. Chrome then reports *"Could not load background script"*.
 
 Requirements: [Node.js](https://nodejs.org/) 22.18 or newer, and Google Chrome.
 
