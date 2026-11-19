@@ -1,7 +1,8 @@
 /**
- * Side panel: shows the location of the current round for the active GeoGuessr tab.
+ * Companion window: shows the location of the current round for the active GeoGuessr tab.
  *
- * Runs as an extension page, so it has its own DOM and never touches the GeoGuessr page.
+ * Runs as an extension page in its own popup window (see companionWindow.ts), so it has its
+ * own DOM, never touches the GeoGuessr page and doesn't change the size of its window.
  * The coordinates come from background.ts via chrome.storage.session.
  */
 import { preloadCountryData, renderCountryMap } from './countryMap';
@@ -30,7 +31,7 @@ const ui = {
     address: element<HTMLDListElement>('address'),
 };
 
-/** The tab the panel currently shows, i.e. the active tab of this window. */
+/** The tab the window currently shows: the active tab of the browser window it follows. */
 let tabId: number | undefined;
 let windowId: number | undefined;
 let coordinates: Coordinates | undefined;
@@ -103,7 +104,7 @@ function renderMap(coords: Coordinates, countryCode: string | undefined): void {
 async function render(): Promise<void> {
     const version = ++renderVersion;
 
-    if (tabId === undefined) return showStatus('Open GeoGuessr in this window.');
+    if (tabId === undefined) return showStatus('Open GeoGuessr in a browser window.');
     if (!coordinates) return showStatus('Waiting for a round to start…');
     if (!revealed) return showStatus('New location detected.', true);
 
@@ -130,9 +131,10 @@ function setCoordinates(next: Coordinates | undefined): void {
     void render();
 }
 
-/** Switches the panel to the active tab of this window. */
+/** Switches to the active tab of the followed browser window. */
 async function followActiveTab(): Promise<void> {
-    const [tab] = await chrome.tabs.query({ active: true, windowId });
+    const [tab] =
+        windowId === undefined ? [] : await chrome.tabs.query({ active: true, windowId }).catch(() => []);
     const next = tab?.id !== undefined && tab.url && GEOGUESSR_URL.test(tab.url) ? tab.id : undefined;
     if (next === tabId && next !== undefined) return;
 
@@ -168,7 +170,36 @@ chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
     if (changeInfo.url !== undefined && tab.active && tab.windowId === windowId) void followActiveTab();
 });
 
+/** Follows the browser window the user switched to; ignores popups like this one. */
+chrome.windows.onFocusChanged.addListener(async (focusedId) => {
+    if (focusedId === chrome.windows.WINDOW_ID_NONE || focusedId === windowId) return;
+    try {
+        const focused = await chrome.windows.get(focusedId);
+        if (focused.type !== 'normal') return;
+    } catch {
+        return;
+    }
+    windowId = focusedId;
+    void followActiveTab();
+});
+
+chrome.windows.onRemoved.addListener(async (removedId) => {
+    if (removedId !== windowId) return;
+    windowId = await lastFocusedBrowserWindow();
+    void followActiveTab();
+});
+
+async function lastFocusedBrowserWindow(): Promise<number | undefined> {
+    try {
+        return (await chrome.windows.getLastFocused({ windowTypes: ['normal'] })).id;
+    } catch {
+        return undefined; // no browser window open
+    }
+}
+
 void (async () => {
-    windowId = (await chrome.windows.getCurrent()).id;
+    // The browser window the toolbar icon was clicked in (set by companionWindow.ts).
+    const param = Number(new URLSearchParams(location.search).get('window'));
+    windowId = Number.isInteger(param) && param > 0 ? param : await lastFocusedBrowserWindow();
     await followActiveTab();
 })();

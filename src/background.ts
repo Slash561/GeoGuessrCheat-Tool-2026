@@ -1,6 +1,6 @@
 /**
  * Background service worker: reads Google's Street View metadata responses via the
- * Chrome DevTools Protocol (chrome.debugger) and stores the coordinates for the side panel.
+ * Chrome DevTools Protocol (chrome.debugger) and stores the coordinates for the companion window.
  * Nothing is injected into the GeoGuessr page.
  *
  * chrome.webRequest can't be used for this: in Manifest V3 it exposes URLs and headers,
@@ -8,6 +8,7 @@
  * While attached, Chrome shows an "ApvGuessr started debugging this browser" bar.
  */
 import { isStreetViewMetadataUrl, parseCoordinates } from './streetViewCoordinates';
+import { openCompanionWindow } from './companionWindow';
 import { clearCoordinates, saveCoordinates } from './tabCoordinates';
 
 const PROTOCOL_VERSION = '1.3';
@@ -113,8 +114,9 @@ chrome.tabs.onRemoved.addListener((tabId) => {
     void clearCoordinates(tabId);
 });
 
-// Clicking the toolbar icon opens the side panel that shows the location.
-void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+// Clicking the toolbar icon opens (or focuses) the companion window that shows the location.
+// A separate popup window instead of a side panel, so the GeoGuessr window keeps its size.
+chrome.action.onClicked.addListener((tab) => void openCompanionWindow(tab.windowId));
 
 // GeoGuessr tabs that were already open when the extension (re)started.
 async function attachToOpenTabs(): Promise<void> {

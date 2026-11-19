@@ -15,7 +15,7 @@ await rm('dist', { recursive: true, force: true });
 await prepareCountries();
 
 const options: esbuild.BuildOptions = {
-    entryPoints: ['src/background.ts', 'src/sidepanel.ts'],
+    entryPoints: ['src/background.ts', 'src/companion.ts'],
     outdir: 'dist',
     bundle: true,
     format: 'iife',

@@ -1,5 +1,5 @@
 /**
- * Latest panorama coordinates per tab, written by background.ts and read by the side panel.
+ * Latest panorama coordinates per tab, written by background.ts and read by the companion window.
  *
  * Kept in chrome.storage.session rather than in a variable of the service worker, because
  * the worker is stopped when idle and would lose them. Session storage is in memory only,
