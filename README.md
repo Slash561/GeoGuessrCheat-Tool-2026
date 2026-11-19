@@ -47,30 +47,6 @@ On macOS, <kbd>Ctrl</kbd> + <kbd>Command</kbd> + <kbd>D</kbd> is also the system
 
 Clicking inside the ApvGuessr window (e.g. **Hide**) moves the focus there, and the game window gets a normal `blur` event, as with any other window.
 
-## How it works
-
-- **Reading the location:** When a tab starts loading `www.geoguessr.com`, the background service worker attaches to it with the `chrome.debugger` API (Chrome DevTools Protocol) and watches its network traffic. When the game loads Google's Street View metadata for a round, the worker reads the response and extracts the coordinates. Nothing is injected into the page, and no extra requests are sent to GeoGuessr. `chrome.debugger` is the only extension API that can read response bodies.
-- **Showing it:** The coordinates are kept in `chrome.storage.session` per tab. The companion window (`companion.html`) shows the location for the active tab of the browser window you pressed the shortcut in. It looks up the address through [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) and draws the country map from bundled [Natural Earth / world-atlas](https://github.com/topojson/world-atlas) data.
-
-### The "ApvGuessr started debugging this browser" bar
-
-Chrome shows this bar whenever an extension uses `chrome.debugger`. It's part of Chrome's own UI, so only you see it; websites and servers don't. It appears when a GeoGuessr tab loads and disappears when all GeoGuessr tabs are closed. Clicking **Cancel** detaches the extension until the tab is reloaded.
-
-The bar can only be hidden by starting Chrome with `--silent-debugger-extension-api` (quit Chrome completely first). On macOS:
-
-```sh
-open -a "Google Chrome" --args --silent-debugger-extension-api
-```
-
-This hides the bar for *all* extensions that use `chrome.debugger`, so only do it if you trust your installed extensions.
-
-## Permissions
-
-| Permission                      | Why                                                |
-| ------------------------------- | -------------------------------------------------- |
-| `debugger`                      | Read the Street View responses of GeoGuessr tabs   |
-| `storage`                       | Keep coordinates per tab and the window position   |
-| `https://www.geoguessr.com/*`   | Recognise GeoGuessr tabs, so the debugger attaches only to them |
 
 ## Disclaimer
 
