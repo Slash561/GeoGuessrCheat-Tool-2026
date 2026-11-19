@@ -31,12 +31,10 @@ After changing the code, run `npm run build` again and click the reload icon on 
 
 | Platform        | Default shortcut                       |
 | --------------- | -------------------------------------- |
-| macOS           | <kbd>Ctrl</kbd> + <kbd>Command</kbd> + <kbd>D</kbd> |
+| macOS           | <kbd>Option</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd>   |
 | Windows / Linux | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Y</kbd>   |
 
 You can change it at `chrome://extensions/shortcuts`. The shortcut is the only way to show the location: there is no toolbar button and no "show" button.
-
-On macOS, <kbd>Ctrl</kbd> + <kbd>Command</kbd> + <kbd>D</kbd> is also the system shortcut for "Look Up". If it opens the dictionary instead, pick a different shortcut.
 
 ## Usage
 

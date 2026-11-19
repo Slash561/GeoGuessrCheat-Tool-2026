@@ -20,7 +20,7 @@
         "show-location": {
             "suggested_key": {
                 "default": "Ctrl+Shift+Y",
-                "mac": "Command+MacCtrl+D"
+                "mac": "Alt+Shift+L"
             },
             "description": "Show the location of the current round"
         }
