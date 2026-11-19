@@ -6,12 +6,6 @@
     "icons": {
         "128": "assets/APV_GUESSR_LOGO.png"
     },
-    "action": {
-        "default_title": "ApvGuessr: show location",
-        "default_icon": {
-            "128": "assets/APV_GUESSR_LOGO.png"
-        }
-    },
     "permissions": [
         "debugger",
         "storage"
@@ -21,5 +15,14 @@
     ],
     "background": {
         "service_worker": "dist/background.js"
+    },
+    "commands": {
+        "show-location": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+Y",
+                "mac": "Command+MacCtrl+D"
+            },
+            "description": "Show the location of the current round"
+        }
     }
 }

@@ -5,6 +5,7 @@
  * window.innerWidth. A separate window leaves the GeoGuessr window (innerWidth and
  * outerWidth) exactly as it is.
  */
+import type { RevealMessage } from './messages';
 
 const PAGE = 'companion.html';
 /** chrome.storage.session: ID of the open companion window (the service worker may restart). */
@@ -52,23 +53,32 @@ async function defaultBounds(sourceWindowId: number): Promise<Bounds> {
 }
 
 /**
- * Focuses the companion window, or creates it next to the given browser window.
- * The companion shows the active tab of the browser window that was focused last.
+ * Reveals the location in the companion window, creating the window next to the given
+ * browser window if it isn't open yet.
+ *
+ * The companion window never gets the focus: the browser window the shortcut was pressed in
+ * keeps it, so the game page sees no blur event.
  */
-export async function openCompanionWindow(sourceWindowId: number): Promise<void> {
+export async function revealInCompanionWindow(sourceWindowId: number): Promise<void> {
     const existing = await existingWindowId();
     if (existing !== undefined) {
-        await chrome.windows.update(existing, { focused: true });
-        return;
+        const message: RevealMessage = { type: 'reveal', windowId: sourceWindowId };
+        try {
+            await chrome.runtime.sendMessage(message);
+            return;
+        } catch {
+            // The window exists but its page isn't listening (e.g. still loading): recreate it.
+            await chrome.windows.remove(existing).catch(() => undefined);
+        }
     }
 
     const { [BOUNDS_KEY]: saved } = await chrome.storage.local.get(BOUNDS_KEY);
     const bounds = isBounds(saved) ? saved : await defaultBounds(sourceWindowId);
 
     const created = await chrome.windows.create({
-        url: `${PAGE}?window=${sourceWindowId}`,
+        url: `${PAGE}?window=${sourceWindowId}&reveal=1`,
         type: 'popup',
-        focused: true,
+        focused: false,
         ...bounds,
     });
     if (created?.id !== undefined) await chrome.storage.session.set({ [WINDOW_KEY]: created.id });

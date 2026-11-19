@@ -54,7 +54,8 @@ const COLORS = {
     countryStroke: '#ffffff',
     neighbor: 'rgba(255, 255, 255, 0.12)',
     neighborStroke: 'rgba(255, 255, 255, 0.25)',
-    dot: '#ff4d4f',
+    dot: '#ff2a2a',
+    dotOutline: 'rgba(30, 10, 40, 0.85)',
 };
 
 let countriesCache: Country[] | null = null;
@@ -350,14 +351,20 @@ export function renderCountryMap(lat: number, lon: number, countryCode?: string)
         }),
     );
 
-    // Location marker: pulsing ring + solid dot.
+    // Location marker: a small static dot centred exactly on the location. The thin dark
+    // outline keeps it visible on both the light country fill and the dark background.
     const [dotX, dotY] = project([lon, lat]).split(',').map(Number);
-    const pulse = svgElement('circle', { cx: dotX, cy: dotY, r: 5, fill: 'none', stroke: COLORS.dot, 'stroke-width': 2 });
-    pulse.append(
-        svgElement('animate', { attributeName: 'r', from: 5, to: 16, dur: '1.5s', repeatCount: 'indefinite' }),
-        svgElement('animate', { attributeName: 'opacity', from: 1, to: 0, dur: '1.5s', repeatCount: 'indefinite' }),
+    svg.append(
+        svgElement('circle', {
+            cx: dotX,
+            cy: dotY,
+            r: 3,
+            fill: COLORS.dot,
+            stroke: COLORS.dotOutline,
+            'stroke-width': 1,
+            'vector-effect': 'non-scaling-stroke',
+        }),
     );
-    svg.append(pulse, svgElement('circle', { cx: dotX, cy: dotY, r: 5, fill: COLORS.dot, stroke: '#ffffff', 'stroke-width': 2 }));
 
     return { element: svg, countryName: country.name };
 }

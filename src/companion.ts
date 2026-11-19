@@ -6,6 +6,7 @@
  * The coordinates come from background.ts via chrome.storage.session.
  */
 import { preloadCountryData, renderCountryMap } from './countryMap';
+import { isRevealMessage } from './messages';
 import { type Coordinates, isCoordinates, loadCoordinates, storageKey } from './tabCoordinates';
 
 type AddressInfo = Record<string, string>;
@@ -22,7 +23,6 @@ function element<T extends HTMLElement>(id: string): T {
 
 const ui = {
     status: element<HTMLParagraphElement>('status'),
-    reveal: element<HTMLButtonElement>('reveal'),
     hide: element<HTMLButtonElement>('hide'),
     result: element<HTMLDivElement>('result'),
     mapPanel: element<HTMLDivElement>('mapPanel'),
@@ -64,10 +64,21 @@ async function getAddress({ lat, long }: Coordinates): Promise<AddressInfo | und
 
 // --- rendering ---------------------------------------------------------------
 
-function showStatus(text: string, canReveal = false): void {
+function showStatus(text: string): void {
     ui.status.textContent = text;
-    ui.reveal.hidden = !canReveal;
     ui.result.hidden = true;
+}
+
+/** The shortcut as set at chrome://extensions/shortcuts, for the hint in the window. */
+let shortcut = '';
+
+async function loadShortcut(): Promise<void> {
+    const commands = await chrome.commands.getAll().catch(() => []);
+    shortcut = commands.find((c) => c.name === 'show-location')?.shortcut ?? '';
+}
+
+function shortcutHint(): string {
+    return shortcut ? `Press ${shortcut} to show it.` : 'Set a shortcut at chrome://extensions/shortcuts to show it.';
 }
 
 function renderAddress(address: AddressInfo | undefined): void {
@@ -106,7 +117,7 @@ async function render(): Promise<void> {
 
     if (tabId === undefined) return showStatus('Open GeoGuessr in a browser window.');
     if (!coordinates) return showStatus('Waiting for a round to start…');
-    if (!revealed) return showStatus('New location detected.', true);
+    if (!revealed) return showStatus(`New location detected. ${shortcutHint()}`);
 
     const coords = coordinates;
     showStatus('Looking up location…');
@@ -144,9 +155,24 @@ async function followActiveTab(): Promise<void> {
     setCoordinates(tabId === undefined ? undefined : await loadCoordinates(tabId));
 }
 
-ui.reveal.addEventListener('click', () => {
+/** Shows the location of the current round, if there is one. Triggered only by the shortcut. */
+function reveal(): void {
+    if (!coordinates || revealed) return;
     revealed = true;
     void render();
+}
+
+// The shortcut was pressed while this window was already open (see companionWindow.ts).
+chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
+    if (!isRevealMessage(message)) return;
+    sendResponse(true);
+    void (async () => {
+        if (message.windowId !== windowId) {
+            windowId = message.windowId;
+            await followActiveTab();
+        }
+        reveal();
+    })();
 });
 
 ui.hide.addEventListener('click', () => {
@@ -199,7 +225,11 @@ async function lastFocusedBrowserWindow(): Promise<number | undefined> {
 
 void (async () => {
     // The browser window the toolbar icon was clicked in (set by companionWindow.ts).
-    const param = Number(new URLSearchParams(location.search).get('window'));
+    const params = new URLSearchParams(location.search);
+    const param = Number(params.get('window'));
     windowId = Number.isInteger(param) && param > 0 ? param : await lastFocusedBrowserWindow();
+    await loadShortcut();
     await followActiveTab();
+    // Opened by the shortcut: show the location right away.
+    if (params.get('reveal') === '1') reveal();
 })();

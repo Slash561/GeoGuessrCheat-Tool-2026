@@ -8,7 +8,7 @@
  * While attached, Chrome shows an "ApvGuessr started debugging this browser" bar.
  */
 import { isStreetViewMetadataUrl, parseCoordinates } from './streetViewCoordinates';
-import { openCompanionWindow } from './companionWindow';
+import { revealInCompanionWindow } from './companionWindow';
 import { clearCoordinates, saveCoordinates } from './tabCoordinates';
 
 const PROTOCOL_VERSION = '1.3';
@@ -114,9 +114,14 @@ chrome.tabs.onRemoved.addListener((tabId) => {
     void clearCoordinates(tabId);
 });
 
-// Clicking the toolbar icon opens (or focuses) the companion window that shows the location.
-// A separate popup window instead of a side panel, so the GeoGuessr window keeps its size.
-chrome.action.onClicked.addListener((tab) => void openCompanionWindow(tab.windowId));
+// The keyboard shortcut (manifest "commands", changeable at chrome://extensions/shortcuts) is
+// the only way to show the location. Chrome handles it before the page, so the page never sees
+// the key press, and the companion window opens without taking the focus.
+chrome.commands.onCommand.addListener(async (command, tab) => {
+    if (command !== 'show-location') return;
+    const windowId = tab?.windowId ?? (await chrome.windows.getLastFocused({ windowTypes: ['normal'] })).id;
+    if (windowId !== undefined) await revealInCompanionWindow(windowId);
+});
 
 // GeoGuessr tabs that were already open when the extension (re)started.
 async function attachToOpenTabs(): Promise<void> {
