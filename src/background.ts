@@ -1,13 +1,14 @@
 /**
  * Background service worker: reads Google's Street View metadata responses via the
- * Chrome DevTools Protocol (chrome.debugger) and forwards the coordinates to the tab.
+ * Chrome DevTools Protocol (chrome.debugger) and stores the coordinates for the side panel.
+ * Nothing is injected into the GeoGuessr page.
  *
  * chrome.webRequest can't be used for this: in Manifest V3 it exposes URLs and headers,
  * but never response bodies. chrome.debugger is the only extension API that does.
  * While attached, Chrome shows an "ApvGuessr started debugging this browser" bar.
  */
-import type { CoordinatesMessage } from './messages';
 import { isStreetViewMetadataUrl, parseCoordinates } from './streetViewCoordinates';
+import { clearCoordinates, saveCoordinates } from './tabCoordinates';
 
 const PROTOCOL_VERSION = '1.3';
 const GEOGUESSR_URL = /^https:\/\/www\.geoguessr\.com\//;
@@ -72,11 +73,7 @@ async function readResponse(tabId: number, requestId: string): Promise<void> {
     const coordinates = parseCoordinates(decodeBody(result));
     if (!coordinates) return;
 
-    const message: CoordinatesMessage = { type: 'apv:coordinates', lat: coordinates[0], long: coordinates[1] };
-    // Only the top frame shows the eye button.
-    chrome.tabs.sendMessage(tabId, message, { frameId: 0 }).catch(() => {
-        // content script not ready (yet); the next metadata response will update it
-    });
+    await saveCoordinates(tabId, { lat: coordinates[0], long: coordinates[1] });
 }
 
 chrome.debugger.onEvent.addListener((source, method, params) => {
@@ -111,7 +108,13 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 });
 
-chrome.tabs.onRemoved.addListener(forget);
+chrome.tabs.onRemoved.addListener((tabId) => {
+    forget(tabId);
+    void clearCoordinates(tabId);
+});
+
+// Clicking the toolbar icon opens the side panel that shows the location.
+void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
 // GeoGuessr tabs that were already open when the extension (re)started.
 async function attachToOpenTabs(): Promise<void> {

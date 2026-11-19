@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ApvGuessr</title>
+    <style>
+        :root {
+            --bg: rgb(56, 38, 102);
+            --panel: rgb(86, 59, 154);
+            --accent: #a19bd9;
+            --button: #6cb928;
+            --text: #ffffff;
+            --muted: rgba(255, 255, 255, 0.7);
+            color-scheme: dark;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 16px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: neo-sans, system-ui, sans-serif;
+        }
+
+        .panel {
+            background: var(--panel);
+            padding: 16px 20px;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        h2 {
+            margin: 0 0 12px;
+            color: var(--accent);
+            font-style: italic;
+            font-weight: 700;
+        }
+
+        .status { color: var(--muted); margin: 0; }
+
+        button {
+            width: 100%;
+            padding: 10px 20px;
+            border: 0;
+            border-radius: 15px;
+            background: var(--button);
+            color: var(--text);
+            font: italic 700 16px neo-sans, system-ui, sans-serif;
+            cursor: pointer;
+        }
+
+        button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+        svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+
+        .country {
+            font-weight: 700;
+            text-transform: uppercase;
+            margin: 12px 0 0;
+        }
+
+        dl { margin: 0; text-align: left; }
+        dt { font-weight: 700; text-transform: uppercase; margin-top: 10px; }
+        dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+
+        [hidden] { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="panel" id="statusPanel">
+        <h2>APVGUESSR</h2>
+        <p class="status" id="status">Loading…</p>
+        <button id="reveal" type="button" hidden>Show location</button>
+    </div>
+
+    <div id="result" hidden>
+        <div class="panel" id="mapPanel" hidden>
+            <h2>MAP</h2>
+            <div id="map"></div>
+            <p class="country" id="countryName"></p>
+        </div>
+        <div class="panel">
+            <h2>LOCATION</h2>
+            <dl id="address"></dl>
+            <button id="hide" type="button" style="margin-top: 16px">Hide</button>
+        </div>
+    </div>
+
+    <script src="dist/sidepanel.js"></script>
+</body>
+</html>

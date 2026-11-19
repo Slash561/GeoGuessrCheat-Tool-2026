@@ -6,8 +6,16 @@
     "icons": {
         "128": "assets/APV_GUESSR_LOGO.png"
     },
+    "action": {
+        "default_title": "ApvGuessr: show location",
+        "default_icon": {
+            "128": "assets/APV_GUESSR_LOGO.png"
+        }
+    },
     "permissions": [
-        "debugger"
+        "debugger",
+        "sidePanel",
+        "storage"
     ],
     "host_permissions": [
         "https://www.geoguessr.com/*"
@@ -15,25 +23,7 @@
     "background": {
         "service_worker": "dist/background.js"
     },
-    "web_accessible_resources": [
-        {
-            "resources": [
-                "assets/view.png"
-            ],
-            "matches": [
-                "https://www.geoguessr.com/*"
-            ]
-        }
-    ],
-    "content_scripts": [
-        {
-            "matches": [
-                "https://www.geoguessr.com/*"
-            ],
-            "js": [
-                "dist/content.js"
-            ],
-            "run_at": "document_start"
-        }
-    ]
+    "side_panel": {
+        "default_path": "sidepanel.html"
+    }
 }
