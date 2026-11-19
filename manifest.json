@@ -2,34 +2,23 @@
     "manifest_version": 3,
     "name": "ApvGuessr",
     "version": "0.5",
-    "description": "Enhance your GeoGuessr experience",
+    "description": "Enhance your game experience",
     "icons": {
         "128": "assets/APV_GUESSR_LOGO.png"
     },
     "permissions": [
-        "activeTab",
-        "tabs",
-        "scripting",
-        "webRequest",
-        "storage"
+        "debugger"
     ],
     "host_permissions": [
-        "https://www.geoguessr.com/"
+        "https://www.geoguessr.com/*"
     ],
+    "background": {
+        "service_worker": "dist/background.js"
+    },
     "web_accessible_resources": [
         {
             "resources": [
-                "assets/pin.png",
                 "assets/view.png"
-            ],
-            "matches": [
-                "https://www.geoguessr.com/*"
-            ]
-        },
-        {
-            "world": "MAIN",
-            "resources": [
-                "xhr_inject.js"
             ],
             "matches": [
                 "https://www.geoguessr.com/*"
@@ -38,15 +27,13 @@
     ],
     "content_scripts": [
         {
-            "world": "MAIN",
             "matches": [
                 "https://www.geoguessr.com/*"
             ],
             "js": [
-                "content.js"
+                "dist/content.js"
             ],
-            "all_frames": true,
-            "run_at": "document_end"
+            "run_at": "document_start"
         }
     ]
 }

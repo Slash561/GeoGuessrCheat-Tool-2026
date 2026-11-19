@@ -2,22 +2,35 @@
 ![APV_GUESSR_HEADER](https://github.com/realapire/geoguessr-cheat/assets/111300928/67d869d9-8747-49f0-84aa-27496acf9697)
 
 - **Tested in All Main Game Modes**<br>
-- **Features: Auto Pin and Location Popup**<br>
+- **Features: Location Popup**<br>
 
 ## How To Use
 
 1. **Installation**
    - Clone or download the repository to your local machine.
+   - Build the extension (TypeScript → `dist/`):
+     ```bash
+     npm install
+     npm run build
+     ```
    - Open Google Chrome and navigate to `chrome://extensions/`.
    - Enable the "Developer mode" toggle switch in the top right corner.
    - Click on the "Load unpacked" button and select the directory where you saved the extension files.
 
 2. **Usage**
    - After installing the extension, navigate to a GeoGuessr game session.
-     <br>**KEYBINDS BELOW ONLY WORK WITH SAFE-MODE OFF**
-   - Press `Ctrl + Shift` (ICON WITH EYE) to display a custom popup with the location information.
-   - Press `Ctrl + Space` (ICON WITH PIN) will automatically pin the location on the map and submit with a random small delay.
-   - Open Settings Tab In-Game and there will be a 'SAFE-MODE' checkbox.
+   - Click the eye icon in the in-game controls to display a popup with the location information
+     and a small map of the country with the exact location marked.
+
+## Development
+
+- `npm run build` – type check (`tsc`) and bundle into `dist/` (esbuild)
+- `npm run watch` – rebuild on every change
+- `npm run typecheck` – type check only
+
+Country borders: [Natural Earth](https://www.naturalearthdata.com/) (public domain), via the
+[`world-atlas`](https://github.com/topojson/world-atlas) package. They are converted at build time by
+`scripts/prepare-countries.ts`.
 
 <hr>
 
