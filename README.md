@@ -12,8 +12,8 @@ Requirements: [Node.js](https://nodejs.org/) 22.18 or newer, and Google Chrome.
 
 1. Get the code:
    ```sh
-   git clone https://github.com/Slash561/guesser-tool-1.git
-   cd guesser-tool-1
+   git clone https://github.com/Slash561/GeoGuessrCheat-Tool-2026.git
+   cd GeoGuessrCheat-Tool-2026
    ```
    (or download the ZIP from GitHub, unpack it and `cd` into the folder)
 2. Build it:
