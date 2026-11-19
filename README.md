@@ -2,7 +2,7 @@
 
 A Chrome extension that shows the location of the current GeoGuessr round: coordinates, address and a small map of the country with the exact spot marked.
 
-It doesn't inject anything into the GeoGuessr page. The location appears in a separate small window, and you trigger it with a keyboard shortcut, so the game window keeps its size and focus.
+The location appears in a separate small window, and you trigger it with a keyboard shortcut, so the game window keeps its size and focus.
 
 ## Installation
 
